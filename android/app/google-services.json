@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "936298059",
+    "project_id": "shotalert-605f1",
+    "storage_bucket": "shotalert-605f1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:936298059:android:c0b000965a811ae4412fce",
+        "android_client_info": {
+          "package_name": "com.example.shot_alert"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "936298059-3t25prtj01rsve30e2jus6apqfi24q4f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.shot_alert",
+            "certificate_hash": "e83fa9be2840a1a1b89d3345010f04e4bbe8eba3"
+          }
+        },
+        {
+          "client_id": "936298059-gmdlrq0dpvesji6uqjkhigh0gid5c7fq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCm88KX_Wc_Ru80-nwSWxJ5KaJKhcasm98"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "936298059-gmdlrq0dpvesji6uqjkhigh0gid5c7fq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
