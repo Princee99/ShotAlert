@@ -61,15 +61,7 @@ class Logger {
     final dataString = data != null ? ' - Data: $data' : '';
 
     // Use color in debug mode, plain in release
-    if (kDebugMode) {
-      debugPrint('$color[$timestamp][$category] $message$dataString$_reset');
-    } else {
-      // In release mode, only log important messages and without colors
-      if (category == ERROR || category == AUTH || category == SYSTEM) {
-        debugPrint(
-            '[$timestamp][$category] $message${data != null ? ' - Data: $data' : ''}');
-      }
-    }
+    debugPrint('$color[$timestamp][$category] $message$dataString$_reset');
   }
 
   // Convenience methods for common logging scenarios

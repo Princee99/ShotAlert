@@ -1,37 +1,110 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:shot_alert/Screens/forgot_pass.dart';
-import 'package:shot_alert/Screens/home.dart';
-import 'package:shot_alert/Screens/phone_num.dart';
-import 'package:shot_alert/Screens/signup.dart';
+import 'package:shot_alert/Screens/authentication/login.dart';
+import 'package:shot_alert/Screens/authentication/phone_num.dart';
+import 'package:shot_alert/wrapper.dart';
 import 'package:shot_alert/services/logger_service.dart'; // Add this import
 
-class Login extends StatefulWidget {
-  const Login({Key? key}) : super(key: key);
+class Signup extends StatefulWidget {
+  const Signup({Key? key}) : super(key: key);
 
   @override
-  _LoginState createState() => _LoginState();
+  _SignupState createState() => _SignupState();
 }
 
-class _LoginState extends State<Login> {
-  TextEditingController emailcontroller = TextEditingController();
-  TextEditingController passcontroller = TextEditingController();
+class _SignupState extends State<Signup> {
+  TextEditingController emailController = TextEditingController();
+  TextEditingController passController = TextEditingController();
   bool _isPasswordVisible = false;
-
   bool isLoading = false;
   String? errorMessage;
 
   @override
   void initState() {
     super.initState();
-    Logger.logNavigation("Previous Screen", "Login Screen");
+    Logger.logNavigation("Previous Screen", "Signup Screen");
   }
 
-  login() async {
-    Logger.logUserAction("Attempting Google sign-in");
+  Future<void> signup() async {
+    Logger.logUserAction("Attempting to create new account",
+        {"email": emailController.text.trim()});
+
+    setState(() {
+      errorMessage = null;
+      isLoading = true;
+    });
+
+    if (!GetUtils.isEmail(emailController.text.trim())) {
+      Logger.warning(Logger.USER, "Invalid email format",
+          {"email": emailController.text.trim()});
+
+      setState(() {
+        errorMessage = "Please enter a valid email address";
+        isLoading = false;
+      });
+      return;
+    }
+
+    if (passController.text.isEmpty) {
+      Logger.warning(Logger.USER, "Empty password");
+
+      setState(() {
+        errorMessage = "Please enter a password";
+        isLoading = false;
+      });
+      return;
+    }
+
+    if (passController.text.length < 6) {
+      Logger.warning(Logger.USER, "Password too short",
+          {"length": passController.text.length.toString()});
+
+      setState(() {
+        errorMessage = "Password must be at least 6 characters long";
+        isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      UserCredential userCred = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+              email: emailController.text.trim(),
+              password: passController.text);
+
+      Logger.logAuth("User registration successful",
+          {"email": userCred.user?.email, "uid": userCred.user?.uid});
+
+      Get.offAll(Wrapper());
+    } on FirebaseAuthException catch (e) {
+      Logger.error(Logger.AUTH, "Registration failed", e, {"code": e.code});
+
+      setState(() {
+        errorMessage = e.code == 'weak-password'
+            ? 'The password provided is too weak.'
+            : e.code == 'email-already-in-use'
+                ? 'The account already exists for that email.'
+                : "An error occurred: $e";
+      });
+    } catch (e) {
+      Logger.error(Logger.AUTH, "Unexpected registration error", e);
+
+      setState(() {
+        errorMessage = "An error occurred: $e";
+        isLoading = false;
+      });
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> loginWithGoogle() async {
+    Logger.logUserAction("Attempting Google sign-in from signup screen");
+
     setState(() {
       isLoading = true;
     });
@@ -53,90 +126,20 @@ class _LoginState extends State<Login> {
         idToken: googleAuth.idToken,
       );
 
-      final userCredential =
+      UserCredential userCred =
           await FirebaseAuth.instance.signInWithCredential(credential);
       Logger.logAuth("Google sign-in successful", {
-        'email': userCredential.user?.email,
-        'displayName': userCredential.user?.displayName,
-        'newUser': userCredential.additionalUserInfo?.isNewUser,
+        "email": userCred.user?.email,
+        "name": userCred.user?.displayName,
+        "newUser": userCred.additionalUserInfo?.isNewUser.toString()
       });
 
-      Get.offAll(() => Homepage());
+      Get.offAll(Wrapper());
     } catch (e) {
       Logger.error(Logger.AUTH, "Google sign-in failed", e);
-      setState(() {
-        errorMessage = 'Google sign-in failed: $e';
-      });
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  Future<void> signin() async {
-    if (!mounted) return;
-
-    Logger.logUserAction(
-        "Attempting email sign-in", {'email': emailcontroller.text.trim()});
-
-    setState(() {
-      errorMessage = null;
-      isLoading = true;
-    });
-
-    if (emailcontroller.text.trim().isEmpty ||
-        !GetUtils.isEmail(emailcontroller.text.trim())) {
-      Logger.warning(Logger.USER, "Invalid email format",
-          {'email': emailcontroller.text.trim()});
 
       setState(() {
-        errorMessage = "Please enter a valid email address";
-        isLoading = false;
-      });
-      return;
-    }
-    if (passcontroller.text.isEmpty) {
-      Logger.warning(Logger.USER, "Empty password");
-
-      setState(() {
-        errorMessage = "Please enter your password";
-        isLoading = false;
-      });
-      return;
-    }
-    try {
-      UserCredential userCredential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(
-              email: emailcontroller.text, password: passcontroller.text);
-
-      Logger.logAuth("Email sign-in successful", {
-        'email': userCredential.user?.email,
-        'emailVerified': userCredential.user?.emailVerified
-      });
-
-      if (userCredential.user != null) {
-        Get.offAll(() => Homepage());
-      }
-    } on FirebaseAuthException catch (e) {
-      Logger.error(Logger.AUTH, "Email sign-in failed", e, {'code': e.code});
-
-      setState(() {
-        if (e.code == 'user-not-found') {
-          errorMessage = 'No user found for that email.';
-        } else if (e.code == 'wrong-password') {
-          errorMessage = 'Incorrect password.';
-        } else if (e.code == 'invalid-credential') {
-          errorMessage = 'The email or password is incorrect.';
-        } else {
-          errorMessage = 'Sign in failed: ${e.message}';
-        }
-      });
-    } catch (e) {
-      Logger.error(Logger.AUTH, "Unexpected error during sign-in", e);
-
-      setState(() {
-        errorMessage = 'An error occurred: $e';
+        errorMessage = "Google sign-in failed: $e";
       });
     } finally {
       setState(() {
@@ -148,7 +151,7 @@ class _LoginState extends State<Login> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return Center(
+      return const Center(
         child: CircularProgressIndicator(),
       );
     } else {
@@ -165,6 +168,7 @@ class _LoginState extends State<Login> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const SizedBox(height: 40),
+                        // Logo - using ClipOval like in login page
                         ClipOval(
                           child: Image.asset(
                             'assets/Logo/logo.jpg',
@@ -180,6 +184,8 @@ class _LoginState extends State<Login> {
                             },
                           ),
                         ),
+
+                        // Email field
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -193,7 +199,7 @@ class _LoginState extends State<Login> {
                             ),
                             const SizedBox(height: 8),
                             TextFormField(
-                              controller: emailcontroller,
+                              controller: emailController,
                               style: TextStyle(color: Colors.white),
                               decoration: InputDecoration(
                                 hintText: 'Email@email.com',
@@ -223,6 +229,8 @@ class _LoginState extends State<Login> {
                             ),
                           ],
                         ),
+
+                        // Password field
                         const SizedBox(height: 16),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -237,7 +245,7 @@ class _LoginState extends State<Login> {
                             ),
                             const SizedBox(height: 8),
                             TextFormField(
-                              controller: passcontroller,
+                              controller: passController,
                               style: TextStyle(color: Colors.white),
                               obscureText: !_isPasswordVisible,
                               decoration: InputDecoration(
@@ -246,8 +254,9 @@ class _LoginState extends State<Login> {
                                 filled: true,
                                 fillColor: Colors.black,
                                 enabledBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.white),
-                                    borderRadius: BorderRadius.circular(14)),
+                                  borderSide: BorderSide(color: Colors.white),
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(color: Colors.white),
                                   borderRadius: BorderRadius.circular(14),
@@ -273,6 +282,8 @@ class _LoginState extends State<Login> {
                             ),
                           ],
                         ),
+
+                        // Error message
                         if (errorMessage != null)
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 10),
@@ -282,11 +293,13 @@ class _LoginState extends State<Login> {
                               textAlign: TextAlign.center,
                             ),
                           ),
+
+                        // Sign Up button
                         const SizedBox(height: 24),
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: signin,
+                            onPressed: signup,
                             style: ElevatedButton.styleFrom(
                               backgroundColor:
                                   const Color.fromARGB(255, 190, 193, 196),
@@ -296,7 +309,7 @@ class _LoginState extends State<Login> {
                               ),
                             ),
                             child: const Text(
-                              'Login',
+                              'Sign Up',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -305,21 +318,8 @@ class _LoginState extends State<Login> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: GestureDetector(
-                            onTap: () => Get.to(() => const ForgotPass()),
-                            child: const Text(
-                              'Forgot Password?',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ),
+
+                        // OR divider
                         const SizedBox(height: 20),
                         Row(
                           children: [
@@ -349,12 +349,14 @@ class _LoginState extends State<Login> {
                             ),
                           ],
                         ),
+
+                        // Google sign-in
                         const SizedBox(height: 24),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             GestureDetector(
-                              onTap: login,
+                              onTap: loginWithGoogle,
                               child: Container(
                                 margin: EdgeInsets.symmetric(horizontal: 15),
                                 child: Image.asset(
@@ -379,23 +381,26 @@ class _LoginState extends State<Login> {
                             ),
                           ],
                         ),
+
                         SizedBox(height: 100),
+
+                        // Already have an account
                         Container(
                           padding: EdgeInsets.symmetric(vertical: 16),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               const Text(
-                                'New to ShotAlert? ',
+                                'Already have an account? ',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 14,
                                 ),
                               ),
                               GestureDetector(
-                                onTap: () => Get.to(() => const Signup()),
+                                onTap: () => Get.to(() => const Login()),
                                 child: const Text(
-                                  'Sign Up',
+                                  'Login',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 14,

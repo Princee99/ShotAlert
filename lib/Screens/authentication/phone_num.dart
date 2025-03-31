@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:shot_alert/Screens/otp.dart';
+import 'package:shot_alert/Screens/authentication/otp.dart';
 import 'package:shot_alert/services/logger_service.dart'; // Add this import
 
 class Loginwithphone extends StatefulWidget {

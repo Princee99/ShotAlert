@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shot_alert/Screens/home.dart';
-import 'package:shot_alert/Screens/login.dart';
-import 'package:shot_alert/Screens/verifyemail.dart';
+import 'package:shot_alert/Screens/authentication/login.dart';
+import 'package:shot_alert/Screens/authentication/verifyemail.dart';
 import 'package:shot_alert/services/logger_service.dart'; // Add this import
 
 class Wrapper extends StatefulWidget {
