@@ -1,11 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     
-<uses-permission android:name="android.permission.CALL_PHONE"/>
-<uses-permission android:name="android.permission.READ_PHONE_STATE"/>
-<uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-<uses-permission android:name="android.permission.RECORD_AUDIO"/>
-<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
-<uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
 
 
 
@@ -40,17 +34,6 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-            <service
-    android:name=".AutoAnswerService"
-    android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
-    <intent-filter>
-        <action android:name="android.accessibilityservice.AccessibilityService"/>
-    </intent-filter>
-
-    <meta-data
-        android:name="android.accessibilityservice"
-        android:resource="@xml/accessibility_service_config"/>
-</service>
 
     </application>
     <!-- Required to query activities that can process text, see:
